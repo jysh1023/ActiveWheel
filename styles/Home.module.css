@@ -56,6 +56,12 @@
   font-size: 1.5rem;
 }
 
+.body{
+  font-size: 1.2rem;
+  margin: 0px 250px 0px 250px;
+
+}
+
 .code {
   background: #fafafa;
   border-radius: 5px;

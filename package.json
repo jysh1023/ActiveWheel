@@ -9,9 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@jonasprimbs/byte-array-converter": "^0.0.4",
+    "@types/w3c-web-serial": "^1.0.2",
+    "array-buffer-to-hex": "^1.0.0",
     "next": "12.2.2",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "serialport": "^10.4.0",
+    "socket.io": "^4.5.1",
+    "ws": "^8.8.0"
   },
   "devDependencies": {
     "@types/node": "18.0.3",

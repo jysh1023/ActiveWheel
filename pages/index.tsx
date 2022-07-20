@@ -19,23 +19,25 @@ const Home: NextPage = () => {
             </a>
           </Link>
 
-          <a href="" className={styles.card}>
+          <Link href="/Temp">
+            <a className={styles.card}>
+              <h2>Temp Page &rarr;</h2>
+            </a>
+          </Link>
+
+          <a className={styles.card}>
             <h2>Mode 1 &rarr;</h2>
           </a>
 
-          <a href="" className={styles.card}>
+          <a className={styles.card}>
             <h2>Mode 2 &rarr;</h2>
           </a>
 
-          <a
-            href="" className={styles.card}
-          >
+          <a className={styles.card}>
             <h2>Mode 3 &rarr;</h2>
           </a>
 
-          <a
-            href="" className={styles.card}
-          >
+          <a className={styles.card}>
             <h2>Mode 4 &rarr;</h2>
             
           </a>
