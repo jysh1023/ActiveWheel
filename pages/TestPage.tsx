@@ -29,6 +29,29 @@ function TestPage () {
   }
 
 
+  function splitter(buffArray: ArrayBufferLike, remainder: Uint8Array | null): {chunks: Uint8Array, remainder: Uint8Array | null}{
+    let array = new Uint8Array(buffArray);
+
+    if (remainder != null){
+      const concatedArray = new Uint8Array(array.length + remainder.length);
+      concatedArray.set(remainder);
+      concatedArray.set(array, remainder.length);
+      array = concatedArray;
+    }
+
+    const length = array.length;
+    const divider = Math.floor(length/4)
+    const chunks = array.slice(0,divider*4)
+
+    let leftOver: Uint8Array | null = null;
+    if (length%4 != 0){
+      leftOver = array.slice(divider*4, length);
+    }
+    
+    return {chunks, remainder: leftOver};
+
+  }
+
   async function readData(){
     if (port == null){
       return null;
@@ -38,20 +61,48 @@ function TestPage () {
       return;
     }
 
+
     try{
+      let newRemainder = null; 
       while (true){
-        
+
         const {value,done} = await reader.read();
+        
         if(done){
           reader.releaseLock();
+          console.log("finished");
           break;
         }
-        if(value.byteLength > 4) {
-          const firstData = value.buffer.slice(0, 4);
-          const view = new DataView(firstData);
-          const decodedValue= view.getInt32(0, true);
-          console.log(decodedValue);
+        if(value){ 
+          const splittedData = splitter(value.buffer, newRemainder);
+          newRemainder = splittedData.remainder; 
+          
+          const emptyArrayBuffer = new ArrayBuffer(splittedData.chunks.byteLength);
+          const view = new DataView(emptyArrayBuffer);
+
+          for (let i=0; i<splittedData.chunks.byteLength; i++) {
+            view.setUint8(i, splittedData.chunks[i]);
+          }
+
+          const chunkLength = splittedData.chunks.byteLength
+          const numChunks = chunkLength / 4;
+          if (numChunks > 1)
+           {
+             const decodedValue= view.getInt32((numChunks - 1) * 4,true);
+             console.log(decodedValue);
+           }
+          
         }
+      }
+
+        // if(value.byteLength > 4) {
+        //   const firstData = value.buffer.slice(0, 4);
+        //   const view = new DataView(firstData);
+        //   const decodedValue= view.getInt32(0, true);
+        //   console.log(decodedValue);
+        // }
+
+
         // if(value.byteLength == 16){
         //   const arrayBufferToHex = require('array-buffer-to-hex')
         //   const string = arrayBufferToHex(value)
@@ -61,10 +112,9 @@ function TestPage () {
         //   // console.log(parseInt(result, 16));
           
         // }
-      }
-    } catch (error) {
+    }catch (error) {
       console.log("error", error);
-    }
+      }
   }
 
   async function changeMode(mode:string){

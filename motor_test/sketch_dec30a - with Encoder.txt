@@ -1,0 +1,54 @@
+#include <Encoder.h>
+
+// The A+ and B+ output of the encoder are connected to pins 6 and 7, respectively.
+// All pins except pin 4 are capable of interrupt for Arduino Zero.
+Encoder myEnc(6, 7);
+
+#define R_IN 9
+#define F_IN 10
+
+void setup() {
+  Serial.begin(115200);
+
+  // the pwm frequency of due board is 1kHz for all pins 2-13.
+  // If the pwm frequency is audible, we may need to change the pwm frequency.
+  // See https://github.com/antodom/pwm_lib
+
+  pinMode(R_IN, OUTPUT);
+  pinMode(F_IN, OUTPUT);
+  analogWrite(R_IN, 0);
+  analogWrite(F_IN, 0);
+}
+
+long oldPosition  = -999;
+
+void set_speed(int v){
+  int s = abs(v);
+  if(s > 255)
+    s = 255;
+    
+  if(v >= 0){
+    digitalWrite(R_IN, LOW);
+    analogWrite(F_IN, s);
+  }
+  else{
+    digitalWrite(F_IN, LOW);
+    analogWrite(R_IN, s);
+  }
+}
+
+float f = 1.0;
+
+void loop() {
+  long newPosition = myEnc.read();
+  if (newPosition != oldPosition) {
+    oldPosition = newPosition;
+    //Serial.println(newPosition);
+  }
+
+  float t = millis() / 1000.0;
+  int v = 20 * sin(6.28 * f * t);
+  Serial.println(v);
+  set_speed(v);
+  delay(1);
+}
