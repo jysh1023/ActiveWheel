@@ -2,17 +2,50 @@ import styles from '../styles/Home.module.css'
 import Head from 'next/head'
 import { useEffect, useState } from 'react'
 import { MouseEvent } from 'react'
+import { setServers } from 'dns';
+import useInterval from 'react-useinterval';
 
 function TestPage () {
-
+  const interval = 5;
   const [port, setPort] = useState<SerialPort>();
   const [reader, setReader] = useState<ReadableStreamDefaultReader>();
+  const [fetchInterval, setFetchInterval] = useState<NodeJS.Timer>();
+  const [remainder, setRemainder] = useState<Uint8Array|null>(null);
+  const [isFetching, setIsFetching] = useState<boolean>(false);
   
   useEffect(()=> {
     if ("serial" in navigator) {
       console.log(" The serial port is supported.")
     }
-  });
+
+    if (fetchInterval != null) {
+      clearInterval(fetchInterval);
+    }
+  }, []);
+
+  useInterval(async () => {
+    if (!isFetching) {
+      return;
+    }
+    if (reader == null) {
+      return;
+    }
+
+    const {value,done} = await reader.read();
+
+    if (done || value == null) {
+      return;
+    }
+
+    const splittedData = splitter(value.buffer, remainder);
+    setRemainder(splittedData.remainder);
+
+    const view = new DataView(splittedData.chunks.buffer);
+    if (view.byteLength < 4) {
+      return;
+    }
+    console.log(view.getInt32(0, true));
+  }, interval);
 
   async function requestSerialPort() {    
     const arduino = await navigator.serial.requestPort();
@@ -52,69 +85,8 @@ function TestPage () {
 
   }
 
-  async function readData(){
-    if (port == null){
-      return null;
-    }
-
-    if (reader == null) {
-      return;
-    }
-
-
-    try{
-      let newRemainder = null; 
-      while (true){
-
-        const {value,done} = await reader.read();
-        
-        if(done){
-          reader.releaseLock();
-          console.log("finished");
-          break;
-        }
-        if(value){ 
-          const splittedData = splitter(value.buffer, newRemainder);
-          newRemainder = splittedData.remainder; 
-          
-          const emptyArrayBuffer = new ArrayBuffer(splittedData.chunks.byteLength);
-          const view = new DataView(emptyArrayBuffer);
-
-          for (let i=0; i<splittedData.chunks.byteLength; i++) {
-            view.setUint8(i, splittedData.chunks[i]);
-          }
-
-          const chunkLength = splittedData.chunks.byteLength
-          const numChunks = chunkLength / 4;
-          if (numChunks > 1)
-           {
-             const decodedValue= view.getInt32((numChunks - 1) * 4,true);
-             console.log(decodedValue);
-           }
-          
-        }
-      }
-
-        // if(value.byteLength > 4) {
-        //   const firstData = value.buffer.slice(0, 4);
-        //   const view = new DataView(firstData);
-        //   const decodedValue= view.getInt32(0, true);
-        //   console.log(decodedValue);
-        // }
-
-
-        // if(value.byteLength == 16){
-        //   const arrayBufferToHex = require('array-buffer-to-hex')
-        //   const string = arrayBufferToHex(value)
-        //   const result = string.slice(2,4) + string.slice(0,2);
-
-        //   // console.log(result);
-        //   // console.log(parseInt(result, 16));
-          
-        // }
-    }catch (error) {
-      console.log("error", error);
-      }
+  function readDataClick() {
+    setIsFetching(!isFetching);
   }
 
   async function changeMode(mode:string){
@@ -141,53 +113,6 @@ function TestPage () {
     
   }
 
-  // async function scrollMouse(){
-  //   if (port == null){
-  //     return null;
-  //   }
-
-  //   while (port.readable){
-  //     const textDecoder = new TextDecoderStream();
-  //     const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
-  //     const reader = textDecoder.readable.getReader();
-         
-  //     try{
-  //       const positions = [];
-
-  //       while (true){
-  //         const {value,done} = await reader.read();
-
-  //         if(done){
-  //           reader.releaseLock();
-  //           break;
-  //         }
-  //         if (value){
-
-  //           const position = parseInt(value);
-  //           positions.push(position); 
-  //           // console.log(position);
-
-  //           if (positions.length == 2){
-
-  //             console.log("Current: " + positions[0] + " , Previous: " + positions[1])
-
-  //             if(positions[1] - positions[0] > 2){
-  //               window.scrollBy(0,-5)
-  //             } else if(positions[1] - positions[0] < -2){
-  //               window.scrollBy(0, 5)
-  //             }
-  //             positions.pop();
-  //             positions.pop();
-  //           }
-  //         }
-  //       }   
-  //     }catch (error) {
-  //       console.log("error");
-  //     }
-  //   }   
-  // }
-
-
   return(
     <div className = {styles.container}>
       
@@ -200,7 +125,7 @@ function TestPage () {
         <h1>Test Page</h1>
 
         <button onClick={requestSerialPort}>Request Serial Port</button> 
-        <button onClick={readData}>Read Data</button> 
+        <button onClick={readDataClick}>Read Data</button> 
         {/* <button onClick={scrollMouse}>Scroll</button>  */}
         {/* <button onClick={disconnectPort}>Disconnect Serial Port</button>  */}
         
