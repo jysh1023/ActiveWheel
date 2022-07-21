@@ -6,26 +6,26 @@ import { setServers } from 'dns';
 import useInterval from 'react-useinterval';
 
 function TestPage () {
+  const prevetTooFastReconnectionDelay = 1000;
   const interval = 10;
   const warmup = 1000;
   const startDelay = warmup + 500;
   const [port, setPort] = useState<SerialPort>();
 
+  const [isReady, setIsReady] = useState<boolean>(false);
   const [remainder, setRemainder] = useState<Uint8Array|null>(null);
   const [isPolling, setIsPolling] = useState<boolean>(false);
   const [isParsing, setIsParsing] = useState<boolean>(false);
+  const [scrollValue, setScrollValue] = useState<number>(0);
 
   useEffect(()=> {
     if ("serial" in navigator) {
       console.log(" The serial port is supported.")
     }
 
-    return () => {
-      // cleanup when unmounting
-      if (port) {
-        port.close();
-      }
-    };
+    setTimeout(() => {
+      setIsReady(true);
+    }, prevetTooFastReconnectionDelay);
   }, []);
 
   useInterval(async () => {
@@ -49,7 +49,7 @@ function TestPage () {
     try {
       const reader = port.readable!.getReader();
       const {value,done} = await reader.read();
-  
+
       reader.releaseLock();
   
       // const {value,done} = await readWithTimeout(port, 100);
@@ -60,9 +60,7 @@ function TestPage () {
       }
   
       if (!isParsing) {
-        console.log("flushing buffer", value.buffer.byteLength);
-        // flush only once.
-        setIsParsing(true);
+        console.log("flushing garbages in the buffer", value.buffer.byteLength);
         return;
       }
   
@@ -76,7 +74,8 @@ function TestPage () {
       if (view.byteLength == 0) {
         return;
       }
-      console.log(view.getInt32(0, true));
+      const scrollValue = view.getInt32(0, true);
+      setScrollValue(scrollValue);
     } catch (e) {
       disconnectOnClick();
       console.log("error while fetching. closing the port");
@@ -107,13 +106,10 @@ function TestPage () {
     setIsPolling(true);
 
     setTimeout(async () => {
-      // handle when nothing to flush.
       setIsParsing(true);
     }, warmup);
 
     setTimeout(async (arduino) => {
-      // handle when nothing to flush.
-      setIsParsing(true);
       const writer = arduino.writable!.getWriter();
       await writer.write(encoder.encode('s'));
       console.log("start sent");
@@ -183,16 +179,18 @@ function TestPage () {
       <main className={styles.main}>
 
         <h1>Test Page</h1>
-
-        <button onClick={requestSerialPort}>Request Serial Port</button> 
-        <button onClick={disconnectOnClick}>disconnect</button> 
+        <div>
+          {scrollValue}
+        </div>
+        <button onClick={requestSerialPort} disabled={!isReady}>Request Serial Port</button> 
+        <button onClick={disconnectOnClick} disabled={!isReady}>disconnect</button> 
         {/* <button onClick={scrollMouse}>Scroll</button>  */}
         {/* <button onClick={disconnectPort}>Disconnect Serial Port</button>  */}
         
-        <button onClick={() =>changeMode("1")}> Mode 1 </button>
-        <button onClick={() =>changeMode("2")}> Mode 2 </button>
-        <button onClick={() =>changeMode("3")}> Mode 3 </button>
-        <button onClick={() =>changeMode("4")}> Mode 4 </button>
+        <button onClick={() =>changeMode("1")} disabled={!isReady}> Mode 1 </button>
+        <button onClick={() =>changeMode("2")} disabled={!isReady}> Mode 2 </button>
+        <button onClick={() =>changeMode("3")} disabled={!isReady}> Mode 3 </button>
+        <button onClick={() =>changeMode("4")} disabled={!isReady}> Mode 4 </button>
         {/* <button onClick={}> OFF </button> */}
 
         <p className={styles.body}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In pulvinar orci a metus scelerisque dictum. 
