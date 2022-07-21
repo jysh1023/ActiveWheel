@@ -1,22 +1,22 @@
 import styles from '../styles/Home.module.css'
 import Head from 'next/head'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MouseEvent } from 'react'
 import { setServers } from 'dns';
 import useInterval from 'react-useinterval';
 
 function TestPage () {
-  const prevetTooFastReconnectionDelay = 2000;
+  const preventTooFastReconnectionDelay = 2000;
   const interval = 10;
   const warmup = 1000;
   const startDelay = warmup + 500;
   const [port, setPort] = useState<SerialPort>();
-
   const [isReady, setIsReady] = useState<boolean>(false);
   const [remainder, setRemainder] = useState<Uint8Array|null>(null);
   const [isPolling, setIsPolling] = useState<boolean>(false);
   const [isParsing, setIsParsing] = useState<boolean>(false);
   const [scrollValue, setScrollValue] = useState<number>(0);
+  const prevScroll = usePrevious<number>(scrollValue) 
 
   useEffect(()=> {
     if ("serial" in navigator) {
@@ -25,7 +25,7 @@ function TestPage () {
 
     setTimeout(() => {
       setIsReady(true);
-    }, prevetTooFastReconnectionDelay);
+    }, preventTooFastReconnectionDelay);
   }, []);
 
   useInterval(async () => {
@@ -46,9 +46,11 @@ function TestPage () {
       return;
     }
 
+
     try {
       const reader = port.readable!.getReader();
       const {value,done} = await reader.read();
+      
 
       reader.releaseLock();
   
@@ -76,12 +78,41 @@ function TestPage () {
       }
       const scrollValue = view.getInt32(0, true);
       setScrollValue(scrollValue);
+
+
     } catch (e) {
       disconnectOnClick();
       console.log("error while fetching. closing the port");
       console.log(e);
     }
   }, interval);
+
+
+  function usePrevious<T>(value: T): T {
+    const ref: any = useRef<T>();
+    useEffect(() => {
+      ref.current = value;
+    }, [value]);
+    return ref.current;
+  }
+
+  useEffect(() => { 
+    
+    scrollMouse(scrollValue,prevScroll)
+
+    // console.log("current ", scrollValue, " previous ", prevScroll );
+  }, [scrollValue, prevScroll]);
+
+
+  function scrollMouse (scrollValue: number, prevScroll:number ){
+
+    if (scrollValue - prevScroll > 2){
+      window.scrollBy(0, -10);
+    }
+    else if (scrollValue - prevScroll < -2){
+      window.scrollBy(0, 10);
+    }
+  }
 
   async function requestSerialPort() {
     let arduino = port;
@@ -168,6 +199,8 @@ function TestPage () {
       location.reload();
     });
   }
+
+  
 
   return(
     <div className = {styles.container}>
