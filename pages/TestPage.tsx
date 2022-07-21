@@ -6,7 +6,7 @@ import { setServers } from 'dns';
 import useInterval from 'react-useinterval';
 
 function TestPage () {
-  const prevetTooFastReconnectionDelay = 1000;
+  const prevetTooFastReconnectionDelay = 2000;
   const interval = 10;
   const warmup = 1000;
   const startDelay = warmup + 500;

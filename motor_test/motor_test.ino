@@ -48,6 +48,8 @@ void setup() {
   as5600.begin(4);  // the direction pin of the IC is hard-wired to VCC. Give any unused digital pin number to begin(). 
   as5600.setDirection(AS5600_CLOCK_WISE);
   angle = as5600.rawAngle();
+
+  delay(3000);
   
 }
 
