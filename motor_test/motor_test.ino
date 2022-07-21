@@ -7,6 +7,8 @@ AS5600 as5600(&Wire1);   //  use the second i2c port
 int angle = 0;    // 0 -- 4091
 int theta = 0;    // 4092 per revolution
 
+bool startRun = false;
+
 using namespace arduino_due::pwm_lib;
 
 // the pwm frequency of due board is 1kHz for all pins 2-13.
@@ -46,6 +48,7 @@ void setup() {
   as5600.begin(4);  // the direction pin of the IC is hard-wired to VCC. Give any unused digital pin number to begin(). 
   as5600.setDirection(AS5600_CLOCK_WISE);
   angle = as5600.rawAngle();
+  
 }
 
 // v = -1. ~ 1.
@@ -69,12 +72,21 @@ int mode = '0';
 
 
 void loop(){
+
   if(Serial.available()){
     int b = Serial.read();
     if(isDigit(b)){
       mode = b;
+    } else if (b == 's') {
+      startRun = true;
     }
   }
+
+  if (!startRun) {
+    return;
+  }
+
+  
 
   int pre = angle;
   angle = as5600.rawAngle();
@@ -86,9 +98,14 @@ void loop(){
   theta += delta;
 
   packet.scroll = theta;
-  Serial.write(packet.buf, sizeof(packet.scroll));
-//  Serial.println(theta);
-  delay(1);
+  
+  int freeSerialBufferSize = Serial.availableForWrite();
+  if (freeSerialBufferSize >= sizeof(packet_t)) {
+    Serial.write(packet.buf, sizeof(packet_t));
+//    Serial.println(packet.scroll);
+    delay(1);
+  }
+  
 
   switch(mode){
     case '1':

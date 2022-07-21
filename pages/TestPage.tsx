@@ -6,87 +6,143 @@ import { setServers } from 'dns';
 import useInterval from 'react-useinterval';
 
 function TestPage () {
-  const interval = 5;
+  const interval = 10;
+  const warmup = 1000;
+  const startDelay = warmup + 500;
   const [port, setPort] = useState<SerialPort>();
-  const [reader, setReader] = useState<ReadableStreamDefaultReader>();
-  const [fetchInterval, setFetchInterval] = useState<NodeJS.Timer>();
+
   const [remainder, setRemainder] = useState<Uint8Array|null>(null);
-  const [isFetching, setIsFetching] = useState<boolean>(false);
-  
+  const [isPolling, setIsPolling] = useState<boolean>(false);
+  const [isParsing, setIsParsing] = useState<boolean>(false);
+
   useEffect(()=> {
     if ("serial" in navigator) {
       console.log(" The serial port is supported.")
     }
 
-    if (fetchInterval != null) {
-      clearInterval(fetchInterval);
-    }
+    return () => {
+      // cleanup when unmounting
+      if (port) {
+        port.close();
+      }
+    };
   }, []);
 
   useInterval(async () => {
-    if (!isFetching) {
+    if (!isPolling) {
       return;
     }
-    if (reader == null) {
-      return;
-    }
-
-    const {value,done} = await reader.read();
-
-    if (done || value == null) {
+    if (port == null) {
       return;
     }
 
-    const splittedData = splitter(value.buffer, remainder);
-    setRemainder(splittedData.remainder);
-
-    const view = new DataView(splittedData.chunks.buffer);
-    if (view.byteLength < 4) {
+    if (port.readable == null ) {
+      console.log("Port is not readable");
       return;
     }
-    console.log(view.getInt32(0, true));
+
+    if (port.readable?.locked) {
+      console.log("locked");
+      return;
+    }
+
+    try {
+      const reader = port.readable!.getReader();
+      const {value,done} = await reader.read();
+  
+      reader.releaseLock();
+  
+      // const {value,done} = await readWithTimeout(port, 100);
+  
+      if (done || value == null || value.buffer.byteLength == 0) {
+        console.log("no data");
+        return;
+      }
+  
+      if (!isParsing) {
+        console.log("flushing buffer", value.buffer.byteLength);
+        // flush only once.
+        setIsParsing(true);
+        return;
+      }
+  
+      const splittedData = splitter(value.buffer, remainder);
+      setRemainder(splittedData.remainder);
+  
+      const view = new DataView(splittedData.chunks.buffer);
+      if (view.byteLength < 4 && view.byteLength > 0) {
+        throw new Error("split error");
+      }
+      if (view.byteLength == 0) {
+        return;
+      }
+      console.log(view.getInt32(0, true));
+    } catch (e) {
+      disconnectOnClick();
+      console.log("error while fetching. closing the port");
+      console.log(e);
+    }
   }, interval);
 
-  async function requestSerialPort() {    
-    const arduino = await navigator.serial.requestPort();
-    console.log(arduino);
-    console.log("request Serial port");
-    await arduino.open({baudRate:115200});
+  async function requestSerialPort() {
+    let arduino = port;
+    if (arduino != null) {
+      await arduino.open({baudRate: 115200});
+    } else 
+    {
+      arduino = await navigator.serial.requestPort();
+      await arduino.open({baudRate: 115200});
+    }
 
     setPort(arduino);
     if (!arduino.readable || arduino.readable.locked) {
       throw new Error("arudino port is not readalbe or locked");
     }
-    const reader = arduino.readable.getReader();
-    setReader(reader);
+
+    const encoder = new TextEncoder(); 
+    if (arduino.writable == null) {
+      throw new Error("failed to start");
+    }
+    
+    setIsPolling(true);
+
+    setTimeout(async () => {
+      // handle when nothing to flush.
+      setIsParsing(true);
+    }, warmup);
+
+    setTimeout(async (arduino) => {
+      // handle when nothing to flush.
+      setIsParsing(true);
+      const writer = arduino.writable!.getWriter();
+      await writer.write(encoder.encode('s'));
+      console.log("start sent");
+      writer.releaseLock();
+    }, startDelay, arduino);
   }
 
-
   function splitter(buffArray: ArrayBufferLike, remainder: Uint8Array | null): {chunks: Uint8Array, remainder: Uint8Array | null}{
-    let array = new Uint8Array(buffArray);
+    let array;
 
-    if (remainder != null){
-      const concatedArray = new Uint8Array(array.length + remainder.length);
+    if (remainder !== null){
+      const concatedArray = new Uint8Array(buffArray.byteLength + remainder.length);
       concatedArray.set(remainder);
-      concatedArray.set(array, remainder.length);
+      concatedArray.set(new Uint8Array(buffArray), remainder.length);
       array = concatedArray;
+    } else {
+      array = new Uint8Array(buffArray);
     }
 
     const length = array.length;
-    const divider = Math.floor(length/4)
-    const chunks = array.slice(0,divider*4)
+    const numChunks = Math.floor(length / 4);
+    const chunks = array.slice(0, numChunks * 4);
 
     let leftOver: Uint8Array | null = null;
-    if (length%4 != 0){
-      leftOver = array.slice(divider*4, length);
+    if (length % 4 !== 0){
+      leftOver = array.slice(numChunks*4, length);
     }
     
     return {chunks, remainder: leftOver};
-
-  }
-
-  function readDataClick() {
-    setIsFetching(!isFetching);
   }
 
   async function changeMode(mode:string){
@@ -102,15 +158,19 @@ function TestPage () {
     }
   }
 
-  async function disconnectPort(){
-    if (port == null){
-      return;
+  function disconnectOnClick() {
+    setIsParsing(false);
+    setIsPolling(false);
+    setRemainder(null);
+    while (port?.readable?.locked || port?.writable?.locked) {
+      // busy wait
     }
-    await port.close();
-    if(port.ondisconnect){
-      console.log("Serial port disconnected")
-    }
-    
+    port?.close().then(() => {
+      console.log("port closed");
+      // refresch the page. 
+      // I'm not sure why, but this makes the connected arduino to work again without physically disconnecting it.
+      location.reload();
+    });
   }
 
   return(
@@ -125,7 +185,7 @@ function TestPage () {
         <h1>Test Page</h1>
 
         <button onClick={requestSerialPort}>Request Serial Port</button> 
-        <button onClick={readDataClick}>Read Data</button> 
+        <button onClick={disconnectOnClick}>disconnect</button> 
         {/* <button onClick={scrollMouse}>Scroll</button>  */}
         {/* <button onClick={disconnectPort}>Disconnect Serial Port</button>  */}
         
