@@ -1,9 +1,8 @@
 import styles from '../styles/Home.module.css'
 import Head from 'next/head'
-import { useEffect, useRef, useState } from 'react'
-import { MouseEvent } from 'react'
-import { setServers } from 'dns';
+import { useEffect, useRef, useState } from 'react';
 import useInterval from 'react-useinterval';
+import SerialComponent from './Components/SerialComponent';
 
 function TestPage () {
   const preventTooFastReconnectionDelay = 2000;
@@ -17,6 +16,7 @@ function TestPage () {
   const [isParsing, setIsParsing] = useState<boolean>(false);
   const [scrollValue, setScrollValue] = useState<number>(0);
   const prevScroll = usePrevious<number>(scrollValue) 
+  const encoder = new TextEncoder(); 
 
   useEffect(()=> {
     if ("serial" in navigator) {
@@ -51,10 +51,7 @@ function TestPage () {
       const reader = port.readable!.getReader();
       const {value,done} = await reader.read();
       
-
       reader.releaseLock();
-  
-      // const {value,done} = await readWithTimeout(port, 100);
   
       if (done || value == null || value.buffer.byteLength == 0) {
         console.log("no data");
@@ -100,16 +97,16 @@ function TestPage () {
     
     scrollMouse(scrollValue,prevScroll)
 
-    // console.log("current ", scrollValue, " previous ", prevScroll );
   }, [scrollValue, prevScroll]);
 
 
   function scrollMouse (scrollValue: number, prevScroll:number ){
 
-    if (scrollValue - prevScroll > 2){
+    const scrollStep = scrollValue - prevScroll; 
+    if (scrollStep > 2){
       window.scrollBy(0, -10);
     }
-    else if (scrollValue - prevScroll < -2){
+    else if (scrollStep < -2){
       window.scrollBy(0, 10);
     }
   }
@@ -129,7 +126,7 @@ function TestPage () {
       throw new Error("arudino port is not readalbe or locked");
     }
 
-    const encoder = new TextEncoder(); 
+    // const encoder = new TextEncoder(); 
     if (arduino.writable == null) {
       throw new Error("failed to start");
     }
@@ -146,6 +143,7 @@ function TestPage () {
       console.log("start sent");
       writer.releaseLock();
     }, startDelay, arduino);
+
   }
 
   function splitter(buffArray: ArrayBufferLike, remainder: Uint8Array | null): {chunks: Uint8Array, remainder: Uint8Array | null}{
@@ -176,13 +174,17 @@ function TestPage () {
     if (port == null) {
       return;
     }
-    
-    const encoder = new TextEncoder(); 
-    while(port.writable){
-      const writer = port.writable.getWriter();
-      await writer.write(encoder.encode(mode))
-      writer.releaseLock();
+
+    const writer = port.writable!.getWriter();
+    await writer.write(encoder.encode(mode))
+    if (mode != '0') {
+      console.log('Mode', mode, ' is ON');
+    } else {
+      console.log('All mode is OFF');
     }
+    writer.releaseLock();
+
+
   }
 
   function disconnectOnClick() {
@@ -200,6 +202,11 @@ function TestPage () {
     });
   }
 
+  function serialOnUpdate() {
+
+    // run on every serail update
+  }
+
   
 
   return(
@@ -210,21 +217,19 @@ function TestPage () {
       </Head>
         
       <main className={styles.main}>
-
+        <SerialComponent onUpdate={serialOnUpdate}/>
         <h1>Test Page</h1>
         <div>
           {scrollValue}
         </div>
-        <button onClick={requestSerialPort} disabled={!isReady}>Request Serial Port</button> 
-        <button onClick={disconnectOnClick} disabled={!isReady}>disconnect</button> 
-        {/* <button onClick={scrollMouse}>Scroll</button>  */}
-        {/* <button onClick={disconnectPort}>Disconnect Serial Port</button>  */}
+        <button onClick={requestSerialPort} disabled={!isReady}>Connect Serial Port</button> 
+        <button onClick={disconnectOnClick} disabled={!isReady}>Disconnect Serial Port</button> 
         
         <button onClick={() =>changeMode("1")} disabled={!isReady}> Mode 1 </button>
         <button onClick={() =>changeMode("2")} disabled={!isReady}> Mode 2 </button>
         <button onClick={() =>changeMode("3")} disabled={!isReady}> Mode 3 </button>
         <button onClick={() =>changeMode("4")} disabled={!isReady}> Mode 4 </button>
-        {/* <button onClick={}> OFF </button> */}
+        <button onClick={() =>changeMode("0")} disabled={!isReady}> OFF </button>
 
         <p className={styles.body}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In pulvinar orci a metus scelerisque dictum. 
           In vitae diam quis justo posuere commodo. Pellentesque tristique fringilla tellus id posuere. 
@@ -268,28 +273,7 @@ function TestPage () {
           Sed sodales diam in est gravida, ut sodales magna dapibus. Morbi lacinia, neque vel ultrices sollicitudin, 
           orci sem tristique mi, sed eleifend massa lacus eu risus. Nulla pellentesque porttitor ligula ut interdum. 
           Suspendisse rutrum, neque eu fermentum vehicula, mi ex pulvinar arcu, at accumsan purus velit nec leo. 
-          Phasellus ac tortor urna. Quisque in lectus enim. Phasellus aliquet magna diam, viverra malesuada mauris 
-          convallis nec. Duis et egestas felis, vitae molestie elit. Etiam feugiat mattis magna, sit amet maximus velit 
-          commodo vitae. Morbi lectus velit, venenatis a orci ut, posuere malesuada ante. Nulla vitae tellus at risus 
-          finibus mattis. Lorem ipsum dolor sit amet, consectetur adipiscing elit. In pulvinar orci a metus scelerisque dictum. 
-          In vitae diam quis justo posuere commodo. Pellentesque tristique fringilla tellus id posuere. 
-          Nullam eu nisl rutrum, mollis sem id, ultricies leo. Ut pretium aliquam mi, sed ultricies tortor dapibus a. 
-          Sed sodales diam in est gravida, ut sodales magna dapibus. Morbi lacinia, neque vel ultrices sollicitudin, 
-          orci sem tristique mi, sed eleifend massa lacus eu risus. Nulla pellentesque porttitor ligula ut interdum. 
-          Suspendisse rutrum, neque eu fermentum vehicula, mi ex pulvinar arcu, at accumsan purus velit nec leo. 
-          Phasellus ac tortor urna. Quisque in lectus enim. Phasellus aliquet magna diam, viverra malesuada mauris 
-          convallis nec. Duis et egestas felis, vitae molestie elit. Etiam feugiat mattis magna, sit amet maximus velit 
-          commodo vitae. Morbi lectus velit, venenatis a orci ut, posuere malesuada ante. Nulla vitae tellus at risus 
-          finibus mattis.Lorem ipsum dolor sit amet, consectetur adipiscing elit. In pulvinar orci a metus scelerisque dictum. 
-          In vitae diam quis justo posuere commodo. Pellentesque tristique fringilla tellus id posuere. 
-          Nullam eu nisl rutrum, mollis sem id, ultricies leo. Ut pretium aliquam mi, sed ultricies tortor dapibus a. 
-          Sed sodales diam in est gravida, ut sodales magna dapibus. Morbi lacinia, neque vel ultrices sollicitudin, 
-          orci sem tristique mi, sed eleifend massa lacus eu risus. Nulla pellentesque porttitor ligula ut interdum. 
-          Suspendisse rutrum, neque eu fermentum vehicula, mi ex pulvinar arcu, at accumsan purus velit nec leo. 
-          Phasellus ac tortor urna. Quisque in lectus enim. Phasellus aliquet magna diam, viverra malesuada mauris 
-          convallis nec. Duis et egestas felis, vitae molestie elit. Etiam feugiat mattis magna, sit amet maximus velit 
-          commodo vitae. Morbi lectus velit, venenatis a orci ut, posuere malesuada ante. Nulla vitae tellus at risus 
-          finibus mattis.</p>
+          </p>
 
 
       </main>

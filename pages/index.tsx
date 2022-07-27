@@ -19,15 +19,11 @@ const Home: NextPage = () => {
             </a>
           </Link>
 
-          <Link href="/Temp">
+          <Link href="/JoyStickMode">
             <a className={styles.card}>
-              <h2>Temp Page &rarr;</h2>
+              <h2>Joy Stick Mode &rarr;</h2>
             </a>
           </Link>
-
-          <a className={styles.card}>
-            <h2>Mode 1 &rarr;</h2>
-          </a>
 
           <a className={styles.card}>
             <h2>Mode 2 &rarr;</h2>

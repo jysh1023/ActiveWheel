@@ -69,7 +69,9 @@ void set_output(float v){
 }
 
 int mode = '0';
-
+int activated_position = 0;
+float prev_t = 0;
+bool initialized = false;
 
 void loop(){
 
@@ -86,7 +88,6 @@ void loop(){
     return;
   }
 
-  
 
   int pre = angle;
   angle = as5600.rawAngle();
@@ -97,12 +98,17 @@ void loop(){
     delta += 4096;
   theta += delta;
 
+  if (!initialized) {
+    activated_position = theta;
+    initialized = true;
+  }
+
   packet.scroll = theta;
+
   
   int freeSerialBufferSize = Serial.availableForWrite();
   if (freeSerialBufferSize >= sizeof(packet_t)) {
     Serial.write(packet.buf, sizeof(packet_t));
-//    Serial.println(packet.scroll);
     delay(1);
   }
   
@@ -124,7 +130,8 @@ void loop(){
     loop_off();
     break;
   }
-  
+
+  prev_t = micros();
 }
 
 void loop_off() {
@@ -144,27 +151,38 @@ void loop_spin() {
 
 #define V_LIMIT 0.5
 
+float prev_x = 0;
+
 void loop_joystick() {
-  float v = theta / 2000.0;
-  if(v > V_LIMIT) v = V_LIMIT;
-  if(v < -V_LIMIT) v = -V_LIMIT;
-  set_output(v);
+  float x = (theta - activated_position);
+  float dt = micros() - prev_t;
+  float dx = x - prev_x;
+  float v = dx / dt;
+  
+  float f = x/2350.0 + 7.1 * v;
+  if(f > V_LIMIT) f = V_LIMIT;
+  if(f < -V_LIMIT) f = -V_LIMIT;
+  set_output(f);
+
+  prev_x = x;
+  
   delay(1);
+
 }
 
 float xp = 0.0;
 
 void loop_friction() {
   // friction force proportional to speed
-  float x = theta / 100.0;
-  float v = 0.0;
+  float x = theta / 50.0;
+  float f = 0.0;
   if(xp != 0.0)   // ignore xp in the first call to this function.
-    v = x - xp;
-  v = 100 * v * fabs(v);
+    f = x - xp; 
+//  v = 100 * v * fabs(v);
 
-  if(v > V_LIMIT) v = V_LIMIT;
-  if(v < -V_LIMIT) v = -V_LIMIT;
-  set_output(v);
+  if(f > V_LIMIT) f = V_LIMIT;
+  if(f < -V_LIMIT) f = -V_LIMIT;
+  set_output(f);
 
   xp = x;
   delay(1);
