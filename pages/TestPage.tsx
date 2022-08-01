@@ -183,8 +183,6 @@ function TestPage () {
       console.log('All mode is OFF');
     }
     writer.releaseLock();
-
-
   }
 
   function disconnectOnClick() {
@@ -202,9 +200,9 @@ function TestPage () {
     });
   }
 
-  function serialOnUpdate() {
-
-    // run on every serail update
+  function serialOnUpdate(value: number) {
+    // console.log("callback", value);
+    // run on every serial update
   }
 
   
@@ -217,19 +215,12 @@ function TestPage () {
       </Head>
         
       <main className={styles.main}>
-        <SerialComponent onUpdate={serialOnUpdate}/>
-        <h1>Test Page</h1>
-        <div>
-          {scrollValue}
-        </div>
-        <button onClick={requestSerialPort} disabled={!isReady}>Connect Serial Port</button> 
-        <button onClick={disconnectOnClick} disabled={!isReady}>Disconnect Serial Port</button> 
         
-        <button onClick={() =>changeMode("1")} disabled={!isReady}> Mode 1 </button>
-        <button onClick={() =>changeMode("2")} disabled={!isReady}> Mode 2 </button>
-        <button onClick={() =>changeMode("3")} disabled={!isReady}> Mode 3 </button>
-        <button onClick={() =>changeMode("4")} disabled={!isReady}> Mode 4 </button>
-        <button onClick={() =>changeMode("0")} disabled={!isReady}> OFF </button>
+        <h1>Test Page</h1>
+        {/* <div>
+          {scrollValue}
+        </div> */}
+        <SerialComponent onUpdate={serialOnUpdate} writeBuffer={[]}/>
 
         <p className={styles.body}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In pulvinar orci a metus scelerisque dictum. 
           In vitae diam quis justo posuere commodo. Pellentesque tristique fringilla tellus id posuere. 

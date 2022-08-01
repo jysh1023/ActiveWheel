@@ -1,6 +1,10 @@
 #include "Wire.h"
 #include "AS5600.h"
 #include "pwm_lib.h"
+#include "AW_lib.h"
+
+Joystick joystick; 
+Detent detent;
 
 AS5600 as5600(&Wire1);   //  use the second i2c port
 
@@ -69,8 +73,6 @@ void set_output(float v){
 }
 
 int mode = '0';
-int activated_position = 0;
-float prev_t = 0;
 bool initialized = false;
 
 void loop(){
@@ -98,11 +100,17 @@ void loop(){
     delta += 4096;
   theta += delta;
 
-  if (!initialized) {
-    activated_position = theta;
-    initialized = true;
+
+  if (mode == '2'){
+    if(!initialized){
+      joystick.setInitial(theta);
+      initialized = true;
+    }
+  } else {
+    initialized = false;
   }
 
+ 
   packet.scroll = theta;
 
   
@@ -130,8 +138,6 @@ void loop(){
     loop_off();
     break;
   }
-
-  prev_t = micros();
 }
 
 void loop_off() {
@@ -151,20 +157,14 @@ void loop_spin() {
 
 #define V_LIMIT 0.5
 
-float prev_x = 0;
-
 void loop_joystick() {
-  float x = (theta - activated_position);
-  float dt = micros() - prev_t;
-  float dx = x - prev_x;
-  float v = dx / dt;
+
+  joystick.setCurrent(theta);
+  float f = joystick.getForce(); 
   
-  float f = x/2350.0 + 7.1 * v;
   if(f > V_LIMIT) f = V_LIMIT;
   if(f < -V_LIMIT) f = -V_LIMIT;
   set_output(f);
-
-  prev_x = x;
   
   delay(1);
 
@@ -189,25 +189,16 @@ void loop_friction() {
 }
 
 void loop_detent() {
-  // friction force proportional to speed
-  float x = theta / 100.0;
-  float v = 0.0;
-  if(xp != 0.0)   // ignore xp in the first call to this function.
-    v = x - xp;
-  v = 100 * v * fabs(v);
-  if(v > V_LIMIT) v = V_LIMIT;
-  if(v < -V_LIMIT) v = -V_LIMIT;
 
-  // divide the interval into friction / no friction zone
-  int i = (theta / 200) % 2;
+  detent.setCurrent(theta);
+  float f = detent.getForce(); 
+
+  if(f > V_LIMIT) f = V_LIMIT;
+  if(f < -V_LIMIT) f = -V_LIMIT;
+
+  set_output(f); 
+
+  delay(1); 
   
-  if(i % 3){  
-    set_output(v);
-  }
-  else{
-    set_output(0);
-  }
 
-  xp = x;
-  delay(1);
 }

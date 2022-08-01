@@ -3,7 +3,7 @@ import Head from 'next/head'
 import { useEffect, useRef, useState } from 'react'
 import useInterval from 'react-useinterval';
 import { Button } from '@mui/material';
-import Joystick from './Components/Joystick';
+import Joystick from './Components/JoystickComponent';
 
 
 function JoyStickMode () {
@@ -105,16 +105,6 @@ function JoyStickMode () {
     return ref.current;
   }
 
-  // useEffect(() => { 
-    
-  //   scrollMouse(scrollValue, prevScrollValue);
-
-  //   if(currentMode == '2') {
-  //     joyStickScroll(initialScrollValue, scrollValue, prevScrollValue);
-  //   }
-
-  // }, [initialScrollValue, scrollValue, prevScrollValue, currentMode]);
-
 
   function scrollMouse (scrollValue: number, prevScrollValue:number ){
 
@@ -135,12 +125,11 @@ function JoyStickMode () {
     console.log(distance);
     
 
-    if (distance > 20 && distance < -20){
-      return;
+    if (distance < 200 && distance > -200){
+      window.scrollBy(0, 0);
+    } else {
+      window.scrollBy(0, -1 * distance / 20);
     }
-
-    window.scrollBy(0, -1 * distance / 20);
-
   }
 
   async function requestSerialPort() {
@@ -247,6 +236,7 @@ function JoyStickMode () {
       <main className={styles.main}>
 
         <h1>Joystick Page</h1>
+
         <div>
           {scrollValue}
         </div>

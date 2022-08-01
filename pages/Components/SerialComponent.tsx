@@ -1,8 +1,12 @@
-import Head from 'next/head'
 import { useEffect, useRef, useState } from 'react'
 import useInterval from 'react-useinterval';
 
-function SerialComponent () {
+interface propsType{
+  onUpdate: (value: number) => void;
+  writeBuffer: string[];
+}
+
+function SerialComponent (props: propsType) {
   const preventTooFastReconnectionDelay = 2000;
   const interval = 10;
   const warmup = 1000;
@@ -13,7 +17,6 @@ function SerialComponent () {
   const [isPolling, setIsPolling] = useState<boolean>(false);
   const [isParsing, setIsParsing] = useState<boolean>(false);
   const [scrollValue, setScrollValue] = useState<number>(0);
-  const prevScroll = usePrevious<number>(scrollValue) 
   const encoder = new TextEncoder(); 
 
   useEffect(()=> {
@@ -26,6 +29,7 @@ function SerialComponent () {
     }, preventTooFastReconnectionDelay);
   }, []);
 
+  // read interval
   useInterval(async () => {
     if (!isPolling) {
       return;
@@ -73,6 +77,7 @@ function SerialComponent () {
       }
       const scrollValue = view.getInt32(0, true);
       setScrollValue(scrollValue);
+      props.onUpdate(scrollValue);
 
 
     } catch (e) {
@@ -82,32 +87,17 @@ function SerialComponent () {
     }
   }, interval);
 
-
-  function usePrevious<T>(value: T): T {
-    const ref: any = useRef<T>();
-    useEffect(() => {
-      ref.current = value;
-    }, [value]);
-    return ref.current;
-  }
-
-  useEffect(() => { 
-    
-    scrollMouse(scrollValue,prevScroll)
-
-  }, [scrollValue, prevScroll]);
+  // Todo: write interval
 
 
-  function scrollMouse (scrollValue: number, prevScroll:number ){
+  // useInterval(async()=>{
+  //   if (port == null){
+  //     return; 
+  //   }
 
-    const scrollStep = scrollValue - prevScroll; 
-    if (scrollStep > 2){
-      window.scrollBy(0, -10);
-    }
-    else if (scrollStep < -2){
-      window.scrollBy(0, 10);
-    }
-  }
+  //   const writer = port.writable!.getWriter();
+  //   await writer.write(encoder.encode());
+  // },interval)
 
   async function requestSerialPort() {
     let arduino = port;
@@ -168,6 +158,7 @@ function SerialComponent () {
     return {chunks, remainder: leftOver};
   }
 
+
   async function changeMode(mode:string){
     if (port == null) {
       return;
@@ -181,8 +172,6 @@ function SerialComponent () {
       console.log('All mode is OFF');
     }
     writer.releaseLock();
-
-
   }
 
   function disconnectOnClick() {
@@ -200,7 +189,20 @@ function SerialComponent () {
     });
   }
 
+  return <>
+    <div>
+      {scrollValue}
+    </div>
+    
+    <button onClick={requestSerialPort} disabled={!isReady}>Connect Serial Port</button> 
+    <button onClick={disconnectOnClick} disabled={!isReady}>Disconnect Serial Port</button> 
 
+    <button onClick={() =>changeMode("1")} disabled={!isReady}> Mode 1 </button>
+    <button onClick={() =>changeMode("2")} disabled={!isReady}> Mode 2 </button>
+    <button onClick={() =>changeMode("3")} disabled={!isReady}> Mode 3 </button>
+    <button onClick={() =>changeMode("4")} disabled={!isReady}> Mode 4 </button>
+    <button onClick={() =>changeMode("0")} disabled={!isReady}> OFF </button>
+  </>;
 }
 
 
