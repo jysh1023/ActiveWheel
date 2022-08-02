@@ -120,3 +120,27 @@
     flex-direction: column;
   }
 }
+
+.connectPort{
+  position: fixed; 
+  top: 30px; 
+  right: 20px;
+}
+
+.disconnectPort{
+  position: fixed; 
+  top: 70px; 
+  right: 20px;
+}
+
+.modeOn{
+  position: fixed; 
+  top: 110px; 
+  right: 20px;
+}
+
+.modeOff{
+  position: fixed; 
+  top: 150px; 
+  right: 20px;
+}

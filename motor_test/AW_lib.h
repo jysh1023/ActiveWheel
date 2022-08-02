@@ -34,4 +34,15 @@ class Detent
     
 };
 
+class Friction
+{
+  public: 
+    
+    void setCurrent(int current);
+    float getForce();
+  private:
+    int currentVal;
+    
+};
+
 #endif 

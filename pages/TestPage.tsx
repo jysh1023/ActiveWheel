@@ -2,7 +2,6 @@ import styles from '../styles/Home.module.css'
 import Head from 'next/head'
 import { useEffect, useRef, useState } from 'react';
 import useInterval from 'react-useinterval';
-import SerialComponent from './Components/SerialComponent';
 
 function TestPage () {
   const preventTooFastReconnectionDelay = 2000;
@@ -199,12 +198,6 @@ function TestPage () {
       location.reload();
     });
   }
-
-  function serialOnUpdate(value: number) {
-    // console.log("callback", value);
-    // run on every serial update
-  }
-
   
 
   return(
@@ -217,10 +210,13 @@ function TestPage () {
       <main className={styles.main}>
         
         <h1>Test Page</h1>
-        {/* <div>
-          {scrollValue}
-        </div> */}
-        <SerialComponent onUpdate={serialOnUpdate} writeBuffer={[]}/>
+        <button onClick={requestSerialPort} disabled={!isReady}>Connect Serial Port</button> 
+        <button onClick={disconnectOnClick} disabled={!isReady}>Disconnect Serial Port</button> 
+        <button onClick={()=>changeMode('1')} disabled={!isReady}>Mode 1</button> 
+        <button onClick={()=>changeMode('2')} disabled={!isReady}>Joystick</button> 
+        <button onClick={()=>changeMode('3')} disabled={!isReady}>Friction</button> 
+        <button onClick={()=>changeMode('4')} disabled={!isReady}>Detent</button> 
+        <button onClick={()=>changeMode('0')} disabled={!isReady}>OFF</button> 
 
         <p className={styles.body}>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In pulvinar orci a metus scelerisque dictum. 
           In vitae diam quis justo posuere commodo. Pellentesque tristique fringilla tellus id posuere. 
@@ -265,7 +261,6 @@ function TestPage () {
           orci sem tristique mi, sed eleifend massa lacus eu risus. Nulla pellentesque porttitor ligula ut interdum. 
           Suspendisse rutrum, neque eu fermentum vehicula, mi ex pulvinar arcu, at accumsan purus velit nec leo. 
           </p>
-
 
       </main>
     </div>

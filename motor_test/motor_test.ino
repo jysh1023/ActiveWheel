@@ -5,6 +5,7 @@
 
 Joystick joystick; 
 Detent detent;
+Friction friction; 
 
 AS5600 as5600(&Wire1);   //  use the second i2c port
 
@@ -174,17 +175,24 @@ float xp = 0.0;
 
 void loop_friction() {
   // friction force proportional to speed
-  float x = theta / 50.0;
-  float f = 0.0;
-  if(xp != 0.0)   // ignore xp in the first call to this function.
-    f = x - xp; 
-//  v = 100 * v * fabs(v);
+//  float x = theta / 50.0;
+//  float f = 0.0;
+//  if(xp != 0.0)   // ignore xp in the first call to this function.
+//    f = x - xp; 
+////  v = 100 * v * fabs(v);
+//
+//  if(f > V_LIMIT) f = V_LIMIT;
+//  if(f < -V_LIMIT) f = -V_LIMIT;
+//
+//  xp = x;
+//
+//  Serial.println(f);
 
-  if(f > V_LIMIT) f = V_LIMIT;
-  if(f < -V_LIMIT) f = -V_LIMIT;
+  friction.setCurrent(theta);
+  float f = friction.getForce(); 
   set_output(f);
 
-  xp = x;
+  
   delay(1);
 }
 

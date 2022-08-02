@@ -1,9 +1,14 @@
+import styles from '/styles/Home.module.css';
 import { useEffect, useRef, useState } from 'react'
 import useInterval from 'react-useinterval';
+import { Button } from '@mui/material';
+
 
 interface propsType{
   onUpdate: (value: number) => void;
-  writeBuffer: string[];
+  writeBuffer: string;
+  initial: (value: number) => void; 
+  modeBuffer: (mode: string) => void;
 }
 
 function SerialComponent (props: propsType) {
@@ -90,15 +95,6 @@ function SerialComponent (props: propsType) {
   // Todo: write interval
 
 
-  // useInterval(async()=>{
-  //   if (port == null){
-  //     return; 
-  //   }
-
-  //   const writer = port.writable!.getWriter();
-  //   await writer.write(encoder.encode());
-  // },interval)
-
   async function requestSerialPort() {
     let arduino = port;
     if (arduino != null) {
@@ -114,7 +110,6 @@ function SerialComponent (props: propsType) {
       throw new Error("arudino port is not readalbe or locked");
     }
 
-    // const encoder = new TextEncoder(); 
     if (arduino.writable == null) {
       throw new Error("failed to start");
     }
@@ -158,7 +153,6 @@ function SerialComponent (props: propsType) {
     return {chunks, remainder: leftOver};
   }
 
-
   async function changeMode(mode:string){
     if (port == null) {
       return;
@@ -166,12 +160,16 @@ function SerialComponent (props: propsType) {
 
     const writer = port.writable!.getWriter();
     await writer.write(encoder.encode(mode))
-    if (mode != '0') {
-      console.log('Mode', mode, ' is ON');
+    props.initial(scrollValue);
+    props.modeBuffer(mode);
+    
+    if (mode == '0') {
+      console.log('Mode is OFF');
     } else {
-      console.log('All mode is OFF');
+      console.log('Mode is ON');
     }
     writer.releaseLock();
+
   }
 
   function disconnectOnClick() {
@@ -190,18 +188,12 @@ function SerialComponent (props: propsType) {
   }
 
   return <>
-    <div>
-      {scrollValue}
-    </div>
     
-    <button onClick={requestSerialPort} disabled={!isReady}>Connect Serial Port</button> 
-    <button onClick={disconnectOnClick} disabled={!isReady}>Disconnect Serial Port</button> 
+    <Button className={styles.connectPort} size='small' variant = 'contained' onClick={requestSerialPort} disabled={!isReady}>Connect Serial Port</Button> 
+    <Button className={styles.disconnectPort} size='small' variant = 'contained' onClick={disconnectOnClick} disabled={!isReady}>Disconnect Serial Port</Button> 
+    <Button className={styles.modeOn} size='small' variant = 'contained' onClick={() =>changeMode(props.writeBuffer)} disabled={!isReady}> Mode ON </Button>
+    <Button className={styles.modeOff} size='small' variant = 'contained' onClick={() =>changeMode("0")} disabled={!isReady}> Mode OFF </Button>
 
-    <button onClick={() =>changeMode("1")} disabled={!isReady}> Mode 1 </button>
-    <button onClick={() =>changeMode("2")} disabled={!isReady}> Mode 2 </button>
-    <button onClick={() =>changeMode("3")} disabled={!isReady}> Mode 3 </button>
-    <button onClick={() =>changeMode("4")} disabled={!isReady}> Mode 4 </button>
-    <button onClick={() =>changeMode("0")} disabled={!isReady}> OFF </button>
   </>;
 }
 

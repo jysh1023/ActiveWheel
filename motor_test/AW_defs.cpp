@@ -5,11 +5,13 @@
 #include "math.h" 
 
 
-float prev_x = 0; 
 int initialVal = 0; 
 int currentVal = 0; 
+
+float prev_x = 0; 
 float prev_t = 0;
 float force = 0;
+float x = 0;
 
 void Joystick::setInitial(int initial)
 {
@@ -24,7 +26,7 @@ void Joystick::setCurrent(int current)
 
 float Joystick::getForce()
 { 
-  float x = (currentVal - initialVal);
+  x = currentVal - initialVal;
   float dt = micros() - prev_t; 
   float dx = x - prev_x;
   float v = dx / dt;
@@ -33,13 +35,14 @@ float Joystick::getForce()
   force = x/2350.0 + 7.1 * v;
 
   prev_t = micros();
+
+//  Serial.println(force);
   
   return force; 
 }
 
-float x=0;
+//float x=0;
 float y=0;
-int prevVal = 0;
 
 void Detent::setCurrent(int current)
 {
@@ -55,13 +58,13 @@ float Detent::getForce()
     if (currentVal >= 0){
       if ((scroll > thousands) && (scroll <= thousands + 150)){
       y = fabs(scroll - thousands);
-      x = y * pow((sin(30*(M_PI/180))),2);
+      x = y * pow((sin(20*(M_PI/180))),2);
       force =  x / 100;
   
       }
       else if ((scroll > thousands + 150) && (scroll < thousands + 300)){
         y = (-1)* scroll + thousands + 300;
-        x = y * pow((sin(30*(M_PI/180))),2);
+        x = y * pow((sin(20*(M_PI/180))),2);
         force = (-1)*x / 100; 
         
       }
@@ -74,13 +77,13 @@ float Detent::getForce()
     else if ((currentVal < 0) && (thousands != 0)){
       if ((scroll > thousands) && (scroll <= thousands + 150)){
       y = fabs(scroll - thousands);
-      x = y * pow((sin(30*(M_PI/180))),2);
+      x = y * pow((sin(20*(M_PI/180))),2);
       force =  (-1)*x / 100;
   
       }
       else if ((scroll > thousands + 150) && (scroll < thousands + 300)){
         y = (-1)* scroll + thousands + 300;
-        x = y * pow((sin(30*(M_PI/180))),2);
+        x = y * pow((sin(20*(M_PI/180))),2);
         force = x / 100; 
         
       }
@@ -94,4 +97,29 @@ float Detent::getForce()
     }
 
   return force; 
+}
+
+int prevVal = 0;
+
+
+void Friction::setCurrent(int current)
+{
+  currentVal = current;
+}
+
+float Friction::getForce()
+{
+  x = currentVal - prevVal;
+  if ((x<3) && (x>-3))
+    force=0; 
+  else
+    force = ((exp(x) - exp(-x)) / (exp(x) + exp(-x)))/6; 
+  
+  prevVal = currentVal;
+
+//  Serial.print(x);
+//  Serial.print('\t');
+//  Serial.println(force);
+  
+  return force;
 }
