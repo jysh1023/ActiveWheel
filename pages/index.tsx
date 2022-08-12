@@ -25,9 +25,12 @@ const Home: NextPage = () => {
             </a>
           </Link>
 
-          <a className={styles.card}>
-            <h2>Mode 2 &rarr;</h2>
-          </a>
+          <Link href="/DetentMode">
+            <a className={styles.card}>
+              <h2>Detent Mode &rarr;</h2>
+            </a>
+          </Link>
+
 
           <a className={styles.card}>
             <h2>Mode 3 &rarr;</h2>

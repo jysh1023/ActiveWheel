@@ -1,19 +1,19 @@
 import styles from '/styles/Home.module.css';
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import useInterval from 'react-useinterval';
 import { Button } from '@mui/material';
 
-
 interface propsType{
   onUpdate: (value: number) => void;
-  writeBuffer: string;
+  mode: string;
   initial: (value: number) => void; 
   modeBuffer: (mode: string) => void;
+  direction: string;
 }
 
 function SerialComponent (props: propsType) {
   const preventTooFastReconnectionDelay = 2000;
-  const interval = 10;
+  const interval = 20;
   const warmup = 1000;
   const startDelay = warmup + 500;
   const [port, setPort] = useState<SerialPort>();
@@ -22,6 +22,7 @@ function SerialComponent (props: propsType) {
   const [isPolling, setIsPolling] = useState<boolean>(false);
   const [isParsing, setIsParsing] = useState<boolean>(false);
   const [scrollValue, setScrollValue] = useState<number>(0);
+  const [writeBuffer, setWrite] = useState<string>(" "); 
   const encoder = new TextEncoder(); 
 
   useEffect(()=> {
@@ -80,9 +81,10 @@ function SerialComponent (props: propsType) {
       if (view.byteLength == 0) {
         return;
       }
-      const scrollValue = view.getInt32(0, true);
-      setScrollValue(scrollValue);
+      const scroll = view.getInt32(0, true);
+      setScrollValue(scroll);
       props.onUpdate(scrollValue);
+      // console.log(scrollValue);
 
 
     } catch (e) {
@@ -94,6 +96,38 @@ function SerialComponent (props: propsType) {
 
   // Todo: write interval
 
+  useEffect(() => {
+    async function serialWrite(){
+      if (port == null) {
+        return;
+      }
+  
+      const writer = port.writable!.getWriter();
+      await writer.write(encoder.encode(writeBuffer))
+
+      console.log(writeBuffer);
+  
+  
+      if (writeBuffer == props.mode){
+        props.initial(scrollValue);
+        props.modeBuffer(props.mode);
+        console.log("Mode is ON")
+      } else if (writeBuffer == '0'){
+        props.modeBuffer('0');
+        console.log("Mode is OFF")
+      }
+  
+      writer.releaseLock();
+    }
+    serialWrite();
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [writeBuffer])
+
+
+  useEffect(()=>{
+    setWrite(props.direction);
+  },[props.direction])
 
   async function requestSerialPort() {
     let arduino = port;
@@ -153,25 +187,6 @@ function SerialComponent (props: propsType) {
     return {chunks, remainder: leftOver};
   }
 
-  async function changeMode(mode:string){
-    if (port == null) {
-      return;
-    }
-
-    const writer = port.writable!.getWriter();
-    await writer.write(encoder.encode(mode))
-    props.initial(scrollValue);
-    props.modeBuffer(mode);
-    
-    if (mode == '0') {
-      console.log('Mode is OFF');
-    } else {
-      console.log('Mode is ON');
-    }
-    writer.releaseLock();
-
-  }
-
   function disconnectOnClick() {
     setIsParsing(false);
     setIsPolling(false);
@@ -187,12 +202,13 @@ function SerialComponent (props: propsType) {
     });
   }
 
+  
   return <>
     
     <Button className={styles.connectPort} size='small' variant = 'contained' onClick={requestSerialPort} disabled={!isReady}>Connect Serial Port</Button> 
     <Button className={styles.disconnectPort} size='small' variant = 'contained' onClick={disconnectOnClick} disabled={!isReady}>Disconnect Serial Port</Button> 
-    <Button className={styles.modeOn} size='small' variant = 'contained' onClick={() =>changeMode(props.writeBuffer)} disabled={!isReady}> Mode ON </Button>
-    <Button className={styles.modeOff} size='small' variant = 'contained' onClick={() =>changeMode("0")} disabled={!isReady}> Mode OFF </Button>
+    <Button className={styles.modeOn} size='small' variant = 'contained' onClick={() => setWrite(props.mode)} disabled={!isReady}> Mode ON </Button>
+    <Button className={styles.modeOff} size='small' variant = 'contained' onClick={() =>setWrite("0")} disabled={!isReady}> Mode OFF </Button>
 
   </>;
 }

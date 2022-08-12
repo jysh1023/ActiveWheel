@@ -26,7 +26,8 @@ class Detent
   
   public:
     void setCurrent(int current); 
-    float getForce();
+    float getForceUp();
+    float getForceDown(); 
 
    private:
     int currentVal; 

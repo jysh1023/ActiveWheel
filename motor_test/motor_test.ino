@@ -114,7 +114,6 @@ void loop(){
  
   packet.scroll = theta;
 
-  
   int freeSerialBufferSize = Serial.availableForWrite();
   if (freeSerialBufferSize >= sizeof(packet_t)) {
     Serial.write(packet.buf, sizeof(packet_t));
@@ -171,22 +170,8 @@ void loop_joystick() {
 
 }
 
-float xp = 0.0;
 
 void loop_friction() {
-  // friction force proportional to speed
-//  float x = theta / 50.0;
-//  float f = 0.0;
-//  if(xp != 0.0)   // ignore xp in the first call to this function.
-//    f = x - xp; 
-////  v = 100 * v * fabs(v);
-//
-//  if(f > V_LIMIT) f = V_LIMIT;
-//  if(f < -V_LIMIT) f = -V_LIMIT;
-//
-//  xp = x;
-//
-//  Serial.println(f);
 
   friction.setCurrent(theta);
   float f = friction.getForce(); 

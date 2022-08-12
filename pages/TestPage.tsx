@@ -5,7 +5,7 @@ import useInterval from 'react-useinterval';
 
 function TestPage () {
   const preventTooFastReconnectionDelay = 2000;
-  const interval = 10;
+  const interval = 20;
   const warmup = 1000;
   const startDelay = warmup + 500;
   const [port, setPort] = useState<SerialPort>();
@@ -210,6 +210,7 @@ function TestPage () {
       <main className={styles.main}>
         
         <h1>Test Page</h1>
+        {scrollValue}
         <button onClick={requestSerialPort} disabled={!isReady}>Connect Serial Port</button> 
         <button onClick={disconnectOnClick} disabled={!isReady}>Disconnect Serial Port</button> 
         <button onClick={()=>changeMode('1')} disabled={!isReady}>Mode 1</button> 

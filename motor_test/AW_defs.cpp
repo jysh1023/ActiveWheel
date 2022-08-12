@@ -10,7 +10,7 @@ int currentVal = 0;
 
 float prev_x = 0; 
 float prev_t = 0;
-float force = 0;
+double force = 0;
 float x = 0;
 
 void Joystick::setInitial(int initial)
@@ -48,6 +48,55 @@ void Detent::setCurrent(int current)
 {
   currentVal = current;
 }
+
+
+float Detent::getForceUp()
+{
+  int scroll = fabs(currentVal);
+  int multiplier = scroll/1000;
+  int thousands = multiplier * 1000; 
+
+  if ((scroll > thousands) && (scroll <= thousands + 150)){
+  y = fabs(scroll - thousands);
+  x = y * pow((sin(20*(M_PI/180))),2);
+  force =  x / 100;
+
+  }
+  else if ((scroll > thousands + 150) && (scroll < thousands + 300)){
+    y = (-1)* scroll + thousands + 300;
+    x = y * pow((sin(20*(M_PI/180))),2);
+    force = (-1)*x / 100; 
+    
+  }
+  else {
+    force = 0;
+  }
+  
+}
+
+float Detent::getForceDown()
+{
+
+  else if ((currentVal < 0) && (thousands != 0)){
+      if ((scroll > thousands) && (scroll <= thousands + 150)){
+      y = fabs(scroll - thousands);
+      x = y * pow((sin(20*(M_PI/180))),2);
+      force =  (-1)*x / 100;
+  
+      }
+      else if ((scroll > thousands + 150) && (scroll < thousands + 300)){
+        y = (-1)* scroll + thousands + 300;
+        x = y * pow((sin(20*(M_PI/180))),2);
+        force = x / 100; 
+        
+      }
+      else {
+        force = 0;
+      }
+    }
+
+}
+
 
 float Detent::getForce()
 {   
@@ -109,16 +158,18 @@ void Friction::setCurrent(int current)
 
 float Friction::getForce()
 {
-  x = currentVal - prevVal;
-  if ((x<3) && (x>-3))
-    force=0; 
-  else
-    force = ((exp(x) - exp(-x)) / (exp(x) + exp(-x)))/6; 
+
+
+  x = (currentVal - prevVal)/5.0;
+  if ((x <= 0.2) && (x>=-0.2)){
+    force = ((exp(x) - exp(-x)) / (exp(x) + exp(-x))); 
+  } else {
+    force = ((exp(x) - exp(-x)) / (exp(x) + exp(-x)))/5.0; 
+  }
+  
   
   prevVal = currentVal;
 
-//  Serial.print(x);
-//  Serial.print('\t');
 //  Serial.println(force);
   
   return force;

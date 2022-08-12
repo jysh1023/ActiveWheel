@@ -144,3 +144,18 @@
   top: 150px; 
   right: 20px;
 }
+
+.box {
+  width: 400px;
+  height: 200px;
+  padding: 20px;
+  margin: 100px auto;
+  background-color: lightblue;
+}
+
+.empty {
+  width: 400px;
+  height: 1000px;
+  padding: 20px;
+  margin: 100px auto;
+}

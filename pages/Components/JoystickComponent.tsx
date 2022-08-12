@@ -1,6 +1,3 @@
-import styles from '../styles/Home.module.css'
-import Head from 'next/head'
-import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import useInterval from 'react-useinterval';
 import SerialComponent from './SerialComponent';
@@ -10,7 +7,7 @@ function JoystickComponent () {
   const interval = 10;
   const [scrollValue, setScrollValue] = useState<number>(0);
   const prevScrollValue = usePrevious<number>(scrollValue) 
-  const [initialScrollValue, setInitial] = useState<number>(0);
+  const [activatedValue, setInitial] = useState<number>(0);
   const [currentMode, setMode] = useState<string>('0');
 
 
@@ -30,10 +27,10 @@ function JoystickComponent () {
 
   useInterval(async () => {
 
-    scrollMouse(scrollValue, prevScrollValue);
-
     if(currentMode == '2') {
-      joyStickScroll(initialScrollValue, scrollValue, prevScrollValue);
+      joyStickScroll(activatedValue, scrollValue);
+    } else {
+      scrollMouse(scrollValue, prevScrollValue);
     }
 
   }, interval);
@@ -52,23 +49,21 @@ function JoystickComponent () {
 
     const scrollStep = scrollValue - prevScrollValue; 
 
-
     if (scrollStep > 5){
-      window.scrollBy(0, -15);
+      window.scrollBy(0, -20);
     }
     else if (scrollStep < -5){
-      window.scrollBy(0, 15);
+      window.scrollBy(0, 20);
     }
   }
 
-  function joyStickScroll (initialValue: number, scrollValue: number, prevScrollValue: number){
+  function joyStickScroll (initial: number, current: number){
 
-    const distance = scrollValue - initialValue; 
-    // console.log(distance);
-    
+    const distance = current - initial; 
 
-    if (distance < 200 && distance > -200){
+    if (distance <= 400 && distance >= -400){
       window.scrollBy(0, 0);
+
     } else {
       window.scrollBy(0, -1 * distance / 20);
     }
@@ -79,9 +74,10 @@ function JoystickComponent () {
   return<>
       <SerialComponent 
         onUpdate={serialOnUpdate} 
-        writeBuffer={'2'} 
+        mode={"2"} 
         initial={modeInitialized} 
-        modeBuffer={modeController}/>
+        modeBuffer={modeController}
+        direction = {""}/>
   </>
 }
 

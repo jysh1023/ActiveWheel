@@ -2,34 +2,30 @@ import { useEffect, useRef, useState } from 'react'
 import useInterval from 'react-useinterval';
 import SerialComponent from './SerialComponent';
 
+interface propsType{
+  position: Array<number[]>;
+}
 
+function DetentComponent(props: propsType){
 
-function DetentComponent(){
-
-  const interval = 10;
+  const interval = 20;
   const [scrollValue, setScrollValue] = useState<number>(0);
-  const prevScrollValue = usePrevious<number>(scrollValue) 
-  const [initialScrollValue, setInitial] = useState<number>(0);
-  const [currentMode, setMode] = useState<string>('0');
-
+  const prevScrollValue = usePrevious<number>(scrollValue);
+  const [objectPosition, setPosition] = useState<Array<number[]>>([]);
+  const [scrollDirection, setDirection] = useState<string>(" "); 
 
   function serialOnUpdate(value: number) {
     // run on every serial update
     setScrollValue(value);
   }
 
-  function modeInitialized(value: number){
-    setInitial(value);
-  }
-
-  function modeController(mode:string){
-    setMode(mode);
-  }
 
   useInterval(async () => {
 
     scrollMouse(scrollValue, prevScrollValue);
 
+    setPosition(props.position);
+    initiateDetent(objectPosition);
 
   }, interval);
 
@@ -42,36 +38,43 @@ function DetentComponent(){
     return ref.current;
   }
 
+  var scrollStep = 0;
 
   function scrollMouse (scrollValue: number, prevScrollValue:number ){
 
-    const scrollStep = scrollValue - prevScrollValue; 
-
+    scrollStep = scrollValue - prevScrollValue;
 
     if (scrollStep > 5){
-      window.scrollBy(0, -15);
+      window.scrollBy(0, -20);
     }
     else if (scrollStep < -5){
-      window.scrollBy(0, 15);
+      window.scrollBy(0, 20);
     }
+
   }
 
-
-  function update(){
+  function initiateDetent(value: Array<number[]>){
+    setDirection("")
+    for (var i = 0; i < value.length; i++){
+      if((value[i][0] <= 50 && value[i][0] > 30) && scrollStep < -5){
+        setDirection("d");
+        
+          
+      } else if ((value[i][0] <= (-value[i][1]-30)) && (value[i][0] > (-value[i][1] - 50)) && scrollStep > 5){
+        setDirection("d"); 
+      } 
+    }
     
-  }
-
-
+  } 
 
   return<>
     <SerialComponent 
       onUpdate={serialOnUpdate} 
-      writeBuffer={'4'} 
-      initial={modeInitialized} 
-      modeBuffer={modeController}/>
+      mode={"4"} 
+      initial={()=>void 0} 
+      modeBuffer={()=>void 0}
+      direction = {scrollDirection}/>
   </>  
-
-
 
 }
 
