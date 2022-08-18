@@ -148,7 +148,7 @@
 .box {
   width: 400px;
   height: 200px;
-  padding: 20px;
+  /* padding: 20px; */
   margin: 100px auto;
   background-color: lightblue;
 }

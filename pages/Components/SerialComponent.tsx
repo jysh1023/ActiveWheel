@@ -8,7 +8,7 @@ interface propsType{
   mode: string;
   initial: (value: number) => void; 
   modeBuffer: (mode: string) => void;
-  direction: string;
+  detent: string;
 }
 
 function SerialComponent (props: propsType) {
@@ -126,8 +126,8 @@ function SerialComponent (props: propsType) {
 
 
   useEffect(()=>{
-    setWrite(props.direction);
-  },[props.direction])
+    setWrite(props.detent);
+  },[props.detent])
 
   async function requestSerialPort() {
     let arduino = port;

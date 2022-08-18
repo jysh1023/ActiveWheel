@@ -26,7 +26,7 @@ float Joystick::getForce()
   float v = dx / dt;
   prev_x = x;
 
-  force = x/700.0 + 5.5*v;
+  force = x/800.0 + 5.5*v;
     
   prev_t = micros();
   

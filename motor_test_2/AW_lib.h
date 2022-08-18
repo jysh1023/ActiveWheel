@@ -20,10 +20,10 @@ class Joystick
     int initial; 
     int current; 
     int touchVal;
-    float prev_x; 
-    float prev_t;
+    float prev_x = 0; 
+    float prev_t = 0;
     double force;
-    float x;
+    float x = 0;
 
 }; 
 
@@ -32,18 +32,18 @@ class Detent
 {
   
   public:
-    void activate(int value, char input);
+    void activateDetent(int value, char input);
     void setCurrent(int value);
     float getForce();
 
    private:
     int initial;
-    char direction;
+    char activate;
     int current; 
-    int previous;
+    int previous = 0;
     double force;
-    float x;
-    float y;
+    float x = 0;
+    float y = 0;
     
 };
 
@@ -54,8 +54,8 @@ class Friction
     float getForce();
   private:
     int current; 
-    int previous;
-    double force;
+    int previous = 0;
+    double force = 0.0;
     
 };
 

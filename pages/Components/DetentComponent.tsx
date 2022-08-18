@@ -12,7 +12,7 @@ function DetentComponent(props: propsType){
   const [scrollValue, setScrollValue] = useState<number>(0);
   const prevScrollValue = usePrevious<number>(scrollValue);
   const [objectPosition, setPosition] = useState<Array<number[]>>([]);
-  const [scrollDirection, setDirection] = useState<string>(" "); 
+  const [activateD, activateDetent] = useState<string>(" "); 
 
   function serialOnUpdate(value: number) {
     // run on every serial update
@@ -54,17 +54,16 @@ function DetentComponent(props: propsType){
   }
 
   function initiateDetent(value: Array<number[]>){
-    setDirection("")
+    activateDetent("")
     for (var i = 0; i < value.length; i++){
-      if((value[i][0] <= 50 && value[i][0] > 30) && scrollStep < -5){
-        setDirection("d");
-        
-          
-      } else if ((value[i][0] <= (-value[i][1]-30)) && (value[i][0] > (-value[i][1] - 50)) && scrollStep > 5){
-        setDirection("d"); 
+      if((value[i][0] < 40 && value[i][0] >= 15) && scrollStep < -5){
+        activateDetent("d");
+        console.log(value[i][0]);
+      } else if ((value[i][0] < (-value[i][1]-15)) && (value[i][0] >= (-value[i][1] - 40)) && scrollStep > 5){
+        activateDetent("u"); 
+        console.log(value[i][0]);
       } 
     }
-    
   } 
 
   return<>
@@ -73,7 +72,7 @@ function DetentComponent(props: propsType){
       mode={"4"} 
       initial={()=>void 0} 
       modeBuffer={()=>void 0}
-      direction = {scrollDirection}/>
+      detent = {activateD}/>
   </>  
 
 }

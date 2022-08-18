@@ -7,6 +7,7 @@
 void Friction::setCurrent(int value)
 {
   current = value;
+  force = 0.0;
 }
 
 float Friction::getForce()

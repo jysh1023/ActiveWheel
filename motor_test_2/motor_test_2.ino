@@ -82,7 +82,7 @@ void set_output(float v){
 int mode = '0';
 int touch = '0';
 bool initialized = false;
-char scrollDirection = '\0'; 
+char activateDetent = '\0'; 
 
 void loop(){
   // check a command from the PC
@@ -92,10 +92,10 @@ void loop(){
       mode = b;
     } else if (b == 's') {
       startRun = true;
-    } else if (b == 'u'){
-      scrollDirection =  'u'; 
     } else if (b == 'd'){
-      scrollDirection =  'd';
+      activateDetent =  'd';
+    }else if (b == 'u'){
+      activateDetent =  'u';
     }
   }
 
@@ -208,27 +208,19 @@ void loop_friction() {
 
 void loop_detent() {
 
-  if(scrollDirection == 'u'){
-    detent.activate(theta, 'u');
-  } else if(scrollDirection == 'd'){
-    detent.activate(theta, 'd');
+  if(activateDetent == 'd'){
+    detent.activateDetent(theta, 'd');
+  }if(activateDetent == 'u'){
+    detent.activateDetent(theta, 'u');
   }
   
   detent.setCurrent(theta);
-  float f = 0;
-
-  if (touch < 400){ 
-    f = 0;
-  } 
-  else {
-    f = detent.getForce();
-  }
+  float f = detent.getForce();
   
-
   if(f > V_LIMIT) f = V_LIMIT;
   if(f < -V_LIMIT) f = -V_LIMIT;
 
   set_output(f); 
-  scrollDirection = '\0';
+  activateDetent = '\0';
   delay(1);
 }

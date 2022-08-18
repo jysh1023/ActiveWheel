@@ -77,7 +77,7 @@ function JoystickComponent () {
         mode={"2"} 
         initial={modeInitialized} 
         modeBuffer={modeController}
-        direction = {""}/>
+        detent = {""}/>
   </>
 }
 
